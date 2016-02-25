@@ -21,8 +21,6 @@
         "php": ">=5.5.0",
         "talesoft/tale-tree": "~0.1"
     },
-    "require-dev": {
-    },
     "autoload": {
         "psr-4": {
             "Tale\\": ""
