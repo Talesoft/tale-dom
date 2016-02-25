@@ -1,6 +1,6 @@
 <?php
 
-namespace Tale\Dom\Html;
+namespace Tale\Dom\Xml;
 
 use Tale\Dom\Parser as DomParser;
 
