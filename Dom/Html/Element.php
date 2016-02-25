@@ -7,6 +7,13 @@ use Tale\Dom\Element as DomElement;
 class Element extends DomElement
 {
 
+    private static $_selfClosingTags = [
+        'input', 'br', 'img', 'link',
+        'area', 'base', 'col', 'command',
+        'embed', 'hr', 'keygen', 'meta',
+        'param', 'source', 'track', 'wbr'
+    ];
+
     public function hasCss()
     {
 
@@ -49,10 +56,9 @@ class Element extends DomElement
         return $this;
     }
 
-    public static function getWriterClassName()
+    public function getString($pretty = false, $requireCloseTag = false, $selfClosingTags = null, $level = null)
     {
-
-        return Writer::class;
+        return parent::getString($pretty, $requireCloseTag, array_merge(self::$_selfClosingTags, $selfClosingTags ?: []), $level);
     }
 
     public static function getParserClassName()

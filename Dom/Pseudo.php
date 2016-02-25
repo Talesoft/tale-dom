@@ -2,7 +2,7 @@
 
 namespace Tale\Dom;
 
-class SelectorPseudo
+final class Pseudo
 {
 
     public static function isFirstChild($value, Element $element, $index)

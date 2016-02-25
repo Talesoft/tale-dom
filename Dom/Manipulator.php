@@ -4,94 +4,93 @@ namespace Tale\Dom;
 
 use Exception,
     IteratorAggregate,
-    ArrayIterator,
     Countable,
     Traversable;
 
-//Just try this: var_dump( $m->html( '[lang="de"]' )->html->parent->body->parent )      :)
+//Just try this: var_dump($m->html('[lang="de"]')->html->parent->body->parent)      :)
+/**
+ * Class Manipulator
+ *
+ * @method $this setAttribute(string $key, string $value)
+ * @method $this getAttribute(string $key, string $value)
+ *
+ * @package Tale\Dom
+ */
 class Manipulator implements IteratorAggregate, Countable
 {
 
+    /**
+     * @var array
+     */
     private $_elements;
 
+    /**
+     * Manipulator constructor.
+     *
+     * @param Element[]|Traversable|string $elements
+     */
     public function __construct($elements = null)
     {
 
         $this->_elements = [];
 
-        if (!is_null($elements))
-            $this->_elements = $this->parseElements($elements);
+        if ($elements !== null)
+            $this->_elements = static::parseElementArray($elements);
     }
 
+    /**
+     * @return Element[]
+     */
     public function getElements()
     {
 
         return $this->_elements;
     }
 
-    public function parseElements($elements)
+    public function getFirst()
     {
 
-        if (is_string($elements)) {
-
-            if (strpos($elements, '<') !== false) {
-
-                $className = static::getElementClassName();
-
-                return [call_user_func([$className, 'fromString'], $elements)];
-            }
-
-            return $this->parseElements(Selector::fromString($elements));
-        }
-
-        if (is_array($elements))
-            return array_filter($elements, function ($val) {
-
-                return $val instanceof Element;
-            });
-
-        if ($elements instanceof self) {
-
-            return $elements->getElements();
-        }
-
-        if ($elements instanceof Traversable) {
-
-            return iterator_to_array($elements);
-        }
-
-        if ($elements instanceof Selector) {
-
-            $className = static::getElementClassName();
-
-            return [call_user_func([$className, 'fromSelector'], $elements)];
-        }
-
-        if ($elements instanceof Element) {
-
-            return [$elements];
-        }
-
-        throw new Exception("Invalid argument $elements passed to Manipulator->parseElements");
+        return count($this) < 1 ? null : $this->_elements[0];
     }
 
+    /**
+     * @param Element[]|Manipulator|string $elements
+     *
+     * @return static
+     * @throws Exception
+     */
     public function add($elements)
     {
 
-        return new static(array_merge($this->_elements, $this->parseElements($elements)));
+        $m = clone $this;
+        foreach (static::parseElements($elements) as $el)
+            $m->_elements[] = $el;
+
+        return $m;
     }
 
-    public function find($selector)
+    /**
+     * @param string $selectors
+     *
+     * @return static
+     */
+    public function query($selectors)
     {
 
-        $result = [];
+        $m = clone $this;
+        $m->_elements = [];
         foreach ($this->_elements as $el)
-            foreach ($el->find($selector) as $foundEl)
-                $result[] = $foundEl;
+            foreach ($el->query($selectors) as $foundEl)
+                $m->_elements[] = $foundEl;
 
-        return new static($result);
+        return $m;
     }
 
+    /**
+     * @param string|int $selector
+     *
+     * @return static
+     */
     public function parent($selector = null)
     {
 
@@ -104,22 +103,26 @@ class Manipulator implements IteratorAggregate, Countable
             return $result;
         }
 
-        $result = [];
+        $m = clone $this;
+        $m->_elements = [];
         foreach ($this->_elements as $el) {
 
-            if ($el->hasParent()) {
+            if (!$el->hasParent())
+                continue;
 
-                $p = $el->getParent();
-                if (!is_string($selector) || $el->matches($selector)) {
-
-                    $result[] = $p;
-                }
-            }
+            $parent = $el->getParent();
+            if (!is_string($selector) || $el->matches($selector))
+                $m->_elements[] = $parent;
         }
 
-        return new static($result);
+        return $m;
     }
 
+    /**
+     * @param string $selector
+     *
+     * @return static
+     */
     public function parents($selector = null)
     {
 
@@ -133,6 +136,9 @@ class Manipulator implements IteratorAggregate, Countable
         return $result;
     }
 
+    /**
+     * @return static
+     */
     public function root()
     {
 
@@ -144,6 +150,11 @@ class Manipulator implements IteratorAggregate, Countable
         return $result;
     }
 
+    /**
+     * @param string $selector
+     *
+     * @return bool
+     */
     public function is($selector = null)
     {
 
@@ -154,105 +165,135 @@ class Manipulator implements IteratorAggregate, Countable
         return true;
     }
 
+    /**
+     * @param Element[]|Traversable|string $elements
+     *
+     * @return $this
+     * @throws Exception
+     */
     public function append($elements)
     {
 
         $elements = $this->parseElements($elements);
-        $result = [];
-        foreach ($this->_elements as $el) {
+        $m = new static($elements);
+        foreach ($m->getElements() as $appendEl)
+            foreach ($this->_elements as $el)
+                $el->appendChild($appendEl);
 
-            foreach ($elements as $appendEl) {
-
-                $el->appendChild($result[] = (clone $appendEl));
-            }
-        }
-
-        return new static($result);
+        return $m;
     }
 
+    /**
+     * @param Element[]|Traversable|string $elements
+     *
+     * @return static
+     */
     public function appendOrAdd($elements)
     {
 
-        return count($this) ? $this->append($elements) : $this->add($elements);
+        return count($this) > 0 ? $this->append($elements) : $this->add($elements);
     }
 
+    /**
+     * @param Element[]|Traversable|string $elements
+     *
+     * @return static
+     * @throws Exception
+     */
     public function prepend($elements)
     {
 
         $elements = $this->parseElements($elements);
-        $result = [];
-        foreach ($this->_elements as $el) {
+        $m = new static($elements);
+        foreach ($m->getElements() as $prependEl)
+            foreach ($this->_elements as $el)
+                $el->prependChild($prependEl);
 
-            foreach ($elements as $prependEl) {
-
-                $el->prependChild($result[] = (clone $prependEl));
-            }
-        }
-
-        return new static($result);
+        return $m;
     }
 
+    /**
+     * @param Element[]|Traversable|string $elements
+     *
+     * @return static
+     */
     public function prependOrAdd($elements)
     {
 
-        return count($this) ? $this->prepend($elements) : $this->add($elements);
+        return count($this) > 0 ? $this->prepend($elements) : $this->add($elements);
     }
 
+    /**
+     * @param Element[]|Traversable|string $elements
+     *
+     * @return static
+     * @throws Exception
+     */
     public function before($elements)
     {
 
         $elements = $this->parseElements($elements);
-        $result = [];
-        foreach ($this->_elements as $el) {
+        $m = new static($elements);
+        foreach ($m->getElements() as $prependEl)
+            foreach ($this->_elements as $el)
+                $el->prepend($prependEl);
 
-            foreach ($elements as $prependEl) {
-
-                $el->insertBefore($result[] = (clone $prependEl));
-            }
-        }
-
-        return new static($result);
+        return $m;
     }
 
+    /**
+     * @param Element[]|Traversable|string $elements
+     *
+     * @return static
+     * @throws Exception
+     */
     public function after($elements)
     {
 
         $elements = $this->parseElements($elements);
-        $result = [];
-        foreach ($this->_elements as $el) {
+        $m = new static($elements);
+        foreach ($m->getElements() as $prependEl)
+            foreach ($this->_elements as $el)
+                $el->append($prependEl);
 
-            foreach ($elements as $prependEl) {
-
-                $el->insertAfter($result[] = (clone $prependEl));
-            }
-        }
-
-        return new static($result);
+        return $m;
     }
 
+    /**
+     * @param Element[]|Traversable|string $elements
+     *
+     * @return static
+     */
     public function appendTo($elements)
     {
 
-        $mp = new static($elements);
-        $mp->append($this);
-
+        $this->append($elements);
         return $this;
     }
 
+    /**
+     * @param Element[]|Traversable|string $elements
+     *
+     * @return static
+     */
     public function prependTo($elements)
     {
 
-        $mp = new static($elements);
-        $mp->prepend($this);
-
+        $this->prepend($elements);
         return $this;
     }
 
+    /**
+     * @param Selector|string $selector
+     *
+     * @return static
+     * @throws Exception
+     */
     public function filter($selector)
     {
 
         $selector = $selector instanceof Selector || is_callable($selector) ? $selector : Selector::fromString($selector);
-        $filter = is_callable($selector) ? $selector : function ($el) use ($selector) {
+        $filter = is_callable($selector) ? $selector : function (Element $el) use ($selector) {
 
             return $el->matches($selector);
         };
@@ -260,29 +301,50 @@ class Manipulator implements IteratorAggregate, Countable
         return new static(array_filter($this->_elements, $filter));
     }
 
+    /**
+     * @param callable $handler
+     *
+     * @return static
+     */
     public function map(callable $handler)
     {
 
         return new static(array_map($handler, $this->_elements, array_keys($this->_elements)));
     }
 
+    /**
+     * @return static
+     */
     public function clear()
     {
 
-        foreach ($this->_elements as $el) {
-
+        foreach ($this->_elements as $el)
             $el->removeChildren();
-        }
 
         return $this;
     }
 
+    public function getText()
+    {
+
+        return implode('', array_map(function(Element $el) {
+
+            return $el->getText();
+        }, $this->_elements));
+    }
+
+    /**
+     * @return int
+     */
     public function count()
     {
 
         return count($this->_elements);
     }
 
+    /**
+     * @return \Generator
+     */
     public function getIterator()
     {
 
@@ -290,82 +352,187 @@ class Manipulator implements IteratorAggregate, Countable
             yield new static($el);
     }
 
-    public function getString(array $options = null)
+    /**
+     * @param bool $pretty
+     * @param bool $requireCloseTag
+     * @param string[] $selfClosingTags
+     *
+     * @return string
+     */
+    public function getString($pretty = false, $requireCloseTag = false, $selfClosingTags = null)
     {
 
+        $newLine = $pretty ? "\n" : '';
         $str = '';
         foreach ($this->_elements as $el)
-            $str .= $el->getString($options);
+            $str .= $el->getString($pretty, $requireCloseTag, $selfClosingTags).$newLine;
 
-        return $str;
+        return trim($str);
     }
 
+    /**
+     * @return string
+     */
     public function __toString()
     {
 
         return $this->getString();
     }
 
-    public function __clone()
-    {
-
-        foreach ($this->_elements as $i => $el)
-            $this->_elements[$i] = clone $el;
-    }
-
+    /**
+     * @param string $method
+     * @param array $args
+     *
+     * @return static|mixed[]
+     */
     public function __call($method, array $args)
     {
 
-        //In case you call $m->parent->parent (without ())
+        //Direct proxy on this instance
+        //We need this for __get calls that proxy without ()
+        //and won't trigger __call (since they actually exist)
         if (method_exists($this, $method)) {
 
             //Just proxy dat shit
             return call_user_func_array([$this, $method], $args);
         }
 
-        //In case you enter an element ($m->div->table->thead or $m->div()->table()->thead())
+        //Automatic element access/creation
         if (!method_exists(static::getElementClassName(), $method)) {
 
+            $selector = $method.(count($args) > 0 ? (string)$args[0] : '');
+            $attributes = count($args) > 1 ? $args[1] : [];
+
+            if (!is_array($attributes))
+                throw new \InvalidArgumentException(
+                    "Argument 2 passed to Manipulator->__call needs to be ".
+                    "attribute array when creating elements"
+                );
+
             //First we check if there's a direct descendant of this selector already
-            $els = $this->find(">$method");
-            if (count($els)) {
+            $els = $this->query(">$selector");
+            if (count($els))
+                $m = $els;
+            else
+                $m = $this->appendOrAdd($selector);
 
-                //Found some sub-elements for this selector, access these
-                return $els;
-            }
+            if (count($attributes))
+                foreach ($attributes as $key => $value)
+                    $m->setAttribute($key, $value);
 
-            //This is some kind of auto-creation ($m->html( '[lang="de"]' )->head->parent->body)
-            return $this->appendOrAdd($method.(count($args) ? $args[0] : ''));
+            return $m;
         }
 
         //In case you want to act on the elements ($m->getText(), $m->setCss() etc.)
         $result = [];
-        foreach ($this->_elements as $el) {
-
+        foreach ($this->_elements as $el)
             $result[] = call_user_func_array([$el, $method], $args);
-        }
 
-        if (in_array($method, ['getText', 'getString', 'getAttribute']))
-            return implode('', $result);
+        foreach ($result as $item)
+            if (!is_a($item, static::getElementClassName()))
+                return $result;
 
-        return $this;
+        return new static($result);
     }
 
+    /**
+     * @param $method
+     *
+     * @return static|array
+     */
     public function __get($method)
     {
 
         return $this->__call($method, []);
     }
 
+    /**
+     * @param $selector
+     *
+     * @return static
+     */
     public function __invoke($selector)
     {
 
-        return $this->find($selector);
+        return $this->query($selector);
     }
 
+    /**
+     * @return string
+     */
     public static function getElementClassName()
     {
 
-        return __NAMESPACE__.'\\Element';
+        return Element::class;
+    }
+
+    /**
+     * @param Element|string $element
+     *
+     * @return Element
+     * @throws Exception
+     */
+    public static function parseElement($element)
+    {
+
+        if ($element instanceof Element)
+            return $element;
+
+        $elementClass = static::getElementClassName();
+        if (is_string($element) && strlen($element) > 1 && $element[0] === '<')
+            return call_user_func([$elementClass, 'fromString'], $element);
+
+        return call_user_func(
+            [$elementClass, 'fromSelector'],
+            $element instanceof Selector ? $element : (string)$element
+        );
+    }
+
+    /**
+     * @param Element[]|array|string $elements
+     *
+     * @return \Generator
+     * @throws Exception
+     */
+    public static function parseElements($elements)
+    {
+
+        if (is_array($elements) || $elements instanceof Traversable) {
+
+            foreach ($elements as $index => $element) {
+
+                if (is_string($index)) {
+
+                    $parent = static::parseElement($index);
+                    $parent->setChildren(static::parseElementArray($element));
+                    yield $parent;
+                    continue;
+                }
+
+                if (is_array($element)) {
+
+                    foreach (static::parseElements($element) as $el)
+                        yield $el;
+                    continue;
+                }
+
+                yield static::parseElement($element);
+            }
+            return;
+        }
+
+        yield static::parseElement($elements);
+    }
+
+    /**
+     * @param Element[]|array|string $elements
+     *
+     * @return Element[]
+     * @throws Exception
+     */
+    public static function parseElementArray($elements)
+    {
+
+        return iterator_to_array(static::parseElements($elements));
     }
 }

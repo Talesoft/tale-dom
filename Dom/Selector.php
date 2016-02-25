@@ -9,7 +9,7 @@ class Selector
 
     const EXPRESSION = '
     /
-        (?<tag>[a-z][a-z0-9_\-\*]*)?           #tag
+        (?<tag>[a-z][a-z0-9_\-\*\|]*)?           #tag
         (?:\.                                  #classes
             (?<class>[a-z][a-z0-9_\-]*)
         )?
@@ -25,12 +25,12 @@ class Selector
     /ix';
 
     static $_registeredPseudos = [
-        'first-child' => [SelectorPseudo::class, 'isFirstChild'],
-        'last-child'  => [SelectorPseudo::class, 'isLastChild'],
-        'nth-child'   => [SelectorPseudo::class, 'isNthChild'],
-        'not'         => [SelectorPseudo::class, 'isNot'],
-        'even'        => [SelectorPseudo::class, 'isEven'],
-        'odd'         => [SelectorPseudo::class, 'isOdd']
+        'first-child' => [Pseudo::class, 'isFirstChild'],
+        'last-child'  => [Pseudo::class, 'isLastChild'],
+        'nth-child'   => [Pseudo::class, 'isNthChild'],
+        'not'         => [Pseudo::class, 'isNot'],
+        'even'        => [Pseudo::class, 'isEven'],
+        'odd'         => [Pseudo::class, 'isOdd']
     ];
 
     private $_name;
@@ -161,7 +161,7 @@ class Selector
         $tag = null;
         foreach ($matches['tag'] as $matchTag)
             if (!empty($matchTag))
-                $tag = $matchTag;
+                $tag = str_replace('|', ':', $matchTag);
 
         $classes = [];
         foreach ($matches['class'] as $class)

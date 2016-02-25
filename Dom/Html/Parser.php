@@ -8,6 +8,6 @@ class Parser extends DomParser {
 
     public static function getElementClassName() {
 
-        return __NAMESPACE__.'\\Element';
+        return Element::class;
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tale\Test;
+namespace Tale\Test\Dom;
 
 use Tale\Dom\Element;
 use Tale\Dom\Html\Element as HtmlElement;

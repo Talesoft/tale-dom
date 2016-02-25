@@ -14,15 +14,6 @@ class Element extends Node
 {
 
     /**
-     *
-     */
-    const ATTRIBUTE_ID = 'id';
-    /**
-     *
-     */
-    const ATTRIBUTE_CLASS = 'class';
-
-    /**
      * @var string
      */
     private $_name;
@@ -148,6 +139,15 @@ class Element extends Node
     }
 
     /**
+     *
+     */
+    const ATTRIBUTE_ID = 'id';
+    /**
+     *
+     */
+    const ATTRIBUTE_CLASS = 'class';
+
+    /**
      * @return bool
      */
     public function hasId()
@@ -225,7 +225,7 @@ class Element extends Node
     public function setClassArray(array $classes)
     {
 
-        return $this->setClasses(implode(' ', $classes));
+        return $this->setClasses(implode(' ', array_map('trim', $classes)));
     }
 
     /**
@@ -311,6 +311,8 @@ class Element extends Node
     }
 
     /**
+     * @param int $depth
+     *
      * @return \Generator
      */
     public function findTexts($depth = null)
@@ -323,6 +325,8 @@ class Element extends Node
     }
 
     /**
+     * @param int $depth
+     *
      * @return array
      */
     public function findTextArray($depth = null)
@@ -352,7 +356,7 @@ class Element extends Node
     }
 
     /**
-     * @param $selector
+     * @param Selector|string $selector
      *
      * @return bool
      * @throws \Exception
@@ -366,7 +370,7 @@ class Element extends Node
     }
 
     /**
-     * @param      $selector
+     * @param Selector|string $selector
      * @param null $depth
      *
      * @return \Generator
@@ -387,7 +391,7 @@ class Element extends Node
     }
 
     /**
-     * @param      $selector
+     * @param Selector|string $selector
      * @param null $depth
      *
      * @return array
@@ -399,7 +403,7 @@ class Element extends Node
     }
 
     /**
-     * @param $selectors
+     * @param string $selectors
      *
      * @return \Generator
      */
@@ -459,15 +463,19 @@ class Element extends Node
     /**
      * @param bool $pretty
      * @param bool $requireCloseTag
-     * @param null $selfClosingTags
+     * @param string[] $selfClosingTags
+     * @param int $level
      *
      * @return string
+     * @throws \Exception
      */
-    public function getString($pretty = false, $requireCloseTag = false, $selfClosingTags = null)
+    public function getString($pretty = false, $requireCloseTag = false, $selfClosingTags = null, $level = null)
     {
 
+        $strlen = function_exists('mb_strlen') ? 'mb_strlen' : 'strlen';
         $newLine = $pretty ? "\n" : '';
-        $indent = $pretty ? '  ' : '';
+        $level = $level ?: 0;
+        $indent = $pretty ? str_repeat('  ', $level) : '';
         $lineLimit = 60;
         $selfClosingTags = $selfClosingTags ? $selfClosingTags : [];
 
@@ -478,16 +486,16 @@ class Element extends Node
         $childCount = count($children);
         $hasChildren = $childCount > 0;
         $isSelfClosing = in_array(strtolower($name), array_map('strtolower', $selfClosingTags));
-        $strlen = function_exists('mb_strlen') ? 'mb_strlen' : 'strlen';
 
-        $str = "<$name";
+
+        $str = $indent."<$name";
 
         if (count($attributes) > 0) {
 
             $str .= ' '.implode(' ', array_map(function($name, $value) {
 
-                    return "$name=\"$value\"";
-                }, array_keys($attributes), $attributes));
+                return "$name=\"$value\"";
+            }, array_keys($attributes), $attributes));
         }
 
         if (!$hasChildren) {
@@ -501,29 +509,73 @@ class Element extends Node
             return $str.' />';
         }
 
-        $str .= $newLine;
-        $inlineText = false;
+        $str .= '>';
+        $childStr = '';
         foreach ($children as $child) {
+
+            if ($child instanceof Element) {
+
+                $childStr .= $child->getString($pretty, $requireCloseTag, $selfClosingTags, $level + 1).$newLine;
+                continue;
+            }
 
             if ($child instanceof Text) {
 
                 $text = str_replace(["\r", "\n", "\t"], ' ', $child->getText());
+                $inline = $childCount === 1 && $strlen($text) < 60;
 
-                $inlineText = $childCount === 1;
+                if (!$pretty || $inline)
+                    $str .= "$text</$name>";
 
-                $str .= $strlen($text) > $lineLimit
-                      ? $indent.wordwrap($text, $lineLimit, "$newLine$indent").$newLine
-                      : ($inlineText ? $indent : '').$text.($inlineText > 1 ? "\n" : '');
+                if ($inline)
+                    return $str;
+
+                if (!$pretty)
+                    continue;
+
+                $childIndent = str_repeat('  ', $level + 1);
+                $childStr .= $childIndent.wordwrap(
+                        $text,
+                        $lineLimit,
+                        "$newLine$childIndent"
+                    ).$newLine;
                 continue;
             }
 
-            if ($child instanceof Element) {
+            if ($child instanceof LeafInterface) {
 
-                $str .= $indent.$child->getString($pretty, $requireCloseTag, $selfClosingTags).$newLine;
+
+                if (!method_exists($child, '__toString'))
+                    throw new \Exception(
+                        "Failed to parse node: Node ".get_class($child).
+                        " cant be converted to a string"
+                    );
+
+                $childStr .= (string)$child.$newLine;
             }
         }
 
-        return $str.($inlineText ? $indent : '')."</$name>";
+        return "$str$newLine$childStr$indent</$name>";
+    }
+
+    public static function fromString($string, $encoding = null)
+    {
+
+        $parserClass = static::getParserClassName();
+        /** @var Parser $parser */
+        $parser = new $parserClass($encoding);
+
+        return $parser->parse($string);
+    }
+
+    public static function fromFile($path, $encoding = null)
+    {
+
+        $parserClass = static::getParserClassName();
+        /** @var Parser $parser */
+        $parser = new $parserClass($encoding);
+
+        return $parser->parseFile($path);
     }
 
     /**
@@ -559,6 +611,12 @@ class Element extends Node
     {
 
         return Text::class;
+    }
+
+    public static function getParserClassName()
+    {
+
+        return Parser::class;
     }
 
     /**
