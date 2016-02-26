@@ -7,10 +7,12 @@ use Tale\Dom\Html\Element as HtmlElement;
 use Tale\Dom\Manipulator;
 use Tale\Dom\Html\Manipulator as HtmlManipulator;
 
-final class Dom
+class Dom
 {
 
-    public function fromString($input, $encoding = null, $html = false)
+    private function __construct() {}
+
+    public static function fromString($input, $encoding = null, $html = false)
     {
 
         if ($html)
@@ -19,7 +21,7 @@ final class Dom
         return Element::fromString($input, $encoding);
     }
 
-    public function fromFile($path, $encoding = null, $html = false)
+    public static function fromFile($path, $encoding = null, $html = false)
     {
 
         if ($html)
@@ -28,7 +30,7 @@ final class Dom
         return Element::fromFile($path, $encoding);
     }
 
-    public function manipulate($elements = null, $html = false)
+    public static function manipulate($elements = null, $html = false)
     {
 
         if ($html)
@@ -37,7 +39,7 @@ final class Dom
         return new Manipulator($elements);
     }
 
-    public function manipulateFile($path, $html = false)
+    public static function manipulateFile($path, $html = false)
     {
 
         $markup = file_get_contents($path);

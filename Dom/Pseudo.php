@@ -2,8 +2,10 @@
 
 namespace Tale\Dom;
 
-final class Pseudo
+class Pseudo
 {
+
+    private function __construct() {}
 
     public static function isFirstChild($value, Element $element, $index)
     {
