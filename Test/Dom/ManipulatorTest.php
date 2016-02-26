@@ -2,12 +2,7 @@
 
 namespace Tale\Test\Dom;
 
-use Tale\Dom\Element;
-use Tale\Dom\Html\Element as HtmlElement;
-use Tale\Dom\Html\Manipulator;
-use Tale\Dom\Parser;
-use Tale\Dom\Html\Parser as HtmlParser;
-use Tale\Dom\Text;
+use Tale\Dom;
 
 
 class ManipulatorTest extends \PHPUnit_Framework_TestCase
@@ -16,7 +11,10 @@ class ManipulatorTest extends \PHPUnit_Framework_TestCase
     public function testPragmatic()
     {
 
-        $m = new Manipulator('<html><head><title /><link /></head><body><p>Some <strong>text</strong> fucking awesome text</p></body></html>');
+        $m = Dom::manipulate(
+            '<html><head><title /><link /></head><body><p>Some <strong>text</strong> fucking awesome text</p></body></html>',
+            true
+        );
         $markup = (string)$m
             ->body
                 ->h1

@@ -11,6 +11,12 @@ use Exception,
 /**
  * Class Manipulator
  *
+ * @property Manipulator $elements
+ * @property Manipulator $first
+ * @property Manipulator $last
+ * @property Manipulator $parent
+ * @property Manipulator $root
+ *
  * @method $this setAttribute(string $key, string $value)
  * @method $this getAttribute(string $key, string $value)
  *
@@ -41,16 +47,23 @@ class Manipulator implements IteratorAggregate, Countable
     /**
      * @return Element[]
      */
-    public function getElements()
+    public function elements()
     {
 
         return $this->_elements;
     }
 
-    public function getFirst()
+    public function first()
     {
 
         return count($this) < 1 ? null : $this->_elements[0];
+    }
+
+    public function last()
+    {
+
+        $len = count($this);
+        return $len < 1 ? null : $this->_elements[$len - 1];
     }
 
     /**
@@ -176,7 +189,7 @@ class Manipulator implements IteratorAggregate, Countable
 
         $elements = $this->parseElements($elements);
         $m = new static($elements);
-        foreach ($m->getElements() as $appendEl)
+        foreach ($m->elements() as $appendEl)
             foreach ($this->_elements as $el)
                 $el->appendChild($appendEl);
 
@@ -205,7 +218,7 @@ class Manipulator implements IteratorAggregate, Countable
 
         $elements = $this->parseElements($elements);
         $m = new static($elements);
-        foreach ($m->getElements() as $prependEl)
+        foreach ($m->elements() as $prependEl)
             foreach ($this->_elements as $el)
                 $el->prependChild($prependEl);
 
@@ -234,7 +247,7 @@ class Manipulator implements IteratorAggregate, Countable
 
         $elements = $this->parseElements($elements);
         $m = new static($elements);
-        foreach ($m->getElements() as $prependEl)
+        foreach ($m->elements() as $prependEl)
             foreach ($this->_elements as $el)
                 $el->prepend($prependEl);
 
@@ -252,7 +265,7 @@ class Manipulator implements IteratorAggregate, Countable
 
         $elements = $this->parseElements($elements);
         $m = new static($elements);
-        foreach ($m->getElements() as $prependEl)
+        foreach ($m->elements() as $prependEl)
             foreach ($this->_elements as $el)
                 $el->append($prependEl);
 
