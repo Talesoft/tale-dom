@@ -62,7 +62,7 @@ class Formatter
 
         $indent = $this->getIndentation($level ?: 0);
         $newLine = $this->getNewLine();
-        $text = str_replace(["\n", "\r", "\t"], ' ', $text);
+        $text = Parser::normalize($text);
 
         if ($this->isPretty() && !$this->isShortText($text))
             $text = wordwrap(
@@ -137,7 +137,6 @@ class Formatter
         if ($this->isShortTextElement($element))
             return $element[0]->format($this, 0);
 
-        $indent = $this->getIndentation($level);
         $newLine = $this->getNewLine();
         $str = $newLine;
         foreach ($element as $child)

@@ -441,7 +441,7 @@ class Element extends Node implements ElementInterface
             }
 
             foreach ($currentSet as $child)
-                $currentSet = $child->findElements($selector, $depth);
+                $currentSet = $child->findElementArray($selector, $depth);
 
             $depth = null;
         }

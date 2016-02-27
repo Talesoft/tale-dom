@@ -61,8 +61,10 @@ class Parser
         xml_set_element_handler($this->_internalParser, 'handleOpenTag', 'handleCloseTag');
         xml_set_character_data_handler($this->_internalParser, 'handleText');
 
+        $string = Parser::normalize($string);
+
         $this->_currentElement = null;
-        if (!xml_parse($this->_internalParser, $string))
+        if (!xml_parse($this->_internalParser, Parser::normalize($string)))
             $this->throwException();
 
         if (is_resource($this->_internalParser))
@@ -128,6 +130,12 @@ class Parser
 
         $textClass = call_user_func([static::getElementClassName(), 'getTextClassName']);
         $this->_currentElement->appendChild(new $textClass($text));
+    }
+
+    public static function normalize($string)
+    {
+
+        return preg_replace('/[\r\n\t]|[ ]{2,}/', ' ', $string);
     }
 
     /**

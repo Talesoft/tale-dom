@@ -490,7 +490,7 @@ class Manipulator implements IteratorAggregate, Countable
             return $element;
 
         $elementClass = static::getElementClassName();
-        if (is_string($element) && strlen($element) > 1 && $element[0] === '<')
+        if (is_string($element) && strstr($element, '<'))
             return call_user_func([$elementClass, 'fromString'], $element);
 
         return call_user_func(
