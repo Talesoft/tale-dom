@@ -3,14 +3,13 @@
 namespace Tale\Dom;
 
 use Tale\Tree\Leaf;
-use Tale\Tree\NodeInterface;
 
 /**
  * Class Text
  *
  * @package Tale\Dom
  */
-class Text extends Leaf
+class Text extends Leaf implements LeafInterface
 {
 
     /**
@@ -41,12 +40,19 @@ class Text extends Leaf
         return $this->_text;
     }
 
+    public function format(Formatter $formatter = null, $level = null)
+    {
+
+        $formatter = $formatter ?: new Formatter();
+        return $formatter->formatText($this->_text, $level);
+    }
+
     /**
      * @return string
      */
     public function __toString()
     {
 
-        return $this->_text;
+        return $this->format();
     }
 }

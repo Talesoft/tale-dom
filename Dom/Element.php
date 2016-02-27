@@ -2,16 +2,23 @@
 
 namespace Tale\Dom;
 
-use Tale\Tree\LeafInterface;
 use Tale\Tree\Node;
-use Tale\Tree\NodeInterface;
 
 /**
  * Class Element
  * @package Tale\Dom
  */
-class Element extends Node
+class Element extends Node implements ElementInterface
 {
+
+    /**
+     *
+     */
+    const ID_ATTRIBUTE = 'id';
+    /**
+     *
+     */
+    const CLASS_ATTRIBUTE = 'class';
 
     /**
      * @var string
@@ -139,21 +146,12 @@ class Element extends Node
     }
 
     /**
-     *
-     */
-    const ATTRIBUTE_ID = 'id';
-    /**
-     *
-     */
-    const ATTRIBUTE_CLASS = 'class';
-
-    /**
      * @return bool
      */
     public function hasId()
     {
 
-        return $this->hasAttribute(self::ATTRIBUTE_ID);
+        return $this->hasAttribute(static::ID_ATTRIBUTE);
     }
 
     /**
@@ -162,7 +160,7 @@ class Element extends Node
     public function getId()
     {
 
-        return $this->getAttribute(self::ATTRIBUTE_ID);
+        return $this->getAttribute(static::ID_ATTRIBUTE);
     }
 
     /**
@@ -173,7 +171,7 @@ class Element extends Node
     public function setId($id)
     {
 
-        return $this->setAttribute(self::ATTRIBUTE_ID, $id);
+        return $this->setAttribute(static::ID_ATTRIBUTE, $id);
     }
 
     /**
@@ -182,7 +180,7 @@ class Element extends Node
     public function hasClasses()
     {
 
-        return $this->hasAttribute(self::ATTRIBUTE_CLASS);
+        return $this->hasAttribute(static::CLASS_ATTRIBUTE);
     }
 
     /**
@@ -191,7 +189,7 @@ class Element extends Node
     public function getClasses()
     {
 
-        return $this->getAttribute(self::ATTRIBUTE_CLASS);
+        return $this->getAttribute(static::CLASS_ATTRIBUTE);
     }
 
     /**
@@ -202,7 +200,7 @@ class Element extends Node
     public function setClasses($classes)
     {
 
-        return $this->setAttribute(self::ATTRIBUTE_CLASS, $classes);
+        return $this->setAttribute(static::CLASS_ATTRIBUTE, $classes);
     }
 
     /**
@@ -461,101 +459,17 @@ class Element extends Node
     }
 
     /**
-     * @param bool $pretty
-     * @param bool $requireCloseTag
-     * @param string[] $selfClosingTags
-     * @param int $level
+     * @param Formatter $formatter
+     * @param int       $level
      *
      * @return string
      * @throws \Exception
      */
-    public function getString($pretty = false, $requireCloseTag = false, $selfClosingTags = null, $level = null)
+    public function format(Formatter $formatter = null, $level = null)
     {
 
-        $strlen = function_exists('mb_strlen') ? 'mb_strlen' : 'strlen';
-        $newLine = $pretty ? "\n" : '';
-        $level = $level ?: 0;
-        $indent = $pretty ? str_repeat('  ', $level) : '';
-        $lineLimit = 60;
-        $selfClosingTags = $selfClosingTags ? $selfClosingTags : [];
-
-        $name = $this->_name;
-        /** @var Element[] $children */
-        $children = $this->getChildren();
-        $attributes = $this->getAttributes();
-        $childCount = count($children);
-        $hasChildren = $childCount > 0;
-        $isSelfClosing = in_array(strtolower($name), array_map('strtolower', $selfClosingTags));
-
-
-        $str = $indent."<$name";
-
-        if (count($attributes) > 0) {
-
-            $str .= ' '.implode(' ', array_map(function($name, $value) {
-
-                return "$name=\"$value\"";
-            }, array_keys($attributes), $attributes));
-        }
-
-        if (!$hasChildren) {
-
-            if ($isSelfClosing)
-                return $str.'>';
-
-            if ($requireCloseTag)
-                return $str."></$name>";
-
-            return $str.' />';
-        }
-
-        $str .= '>';
-        $childStr = '';
-        foreach ($children as $child) {
-
-            if ($child instanceof Element) {
-
-                $childStr .= $child->getString($pretty, $requireCloseTag, $selfClosingTags, $level + 1).$newLine;
-                continue;
-            }
-
-            if ($child instanceof Text) {
-
-                $text = str_replace(["\r", "\n", "\t"], ' ', $child->getText());
-                $inline = $childCount === 1 && $strlen($text) < 60;
-
-                if (!$pretty || $inline)
-                    $str .= "$text</$name>";
-
-                if ($inline)
-                    return $str;
-
-                if (!$pretty)
-                    continue;
-
-                $childIndent = str_repeat('  ', $level + 1);
-                $childStr .= $childIndent.wordwrap(
-                        $text,
-                        $lineLimit,
-                        "$newLine$childIndent"
-                    ).$newLine;
-                continue;
-            }
-
-            if ($child instanceof LeafInterface) {
-
-
-                if (!method_exists($child, '__toString'))
-                    throw new \Exception(
-                        "Failed to parse node: Node ".get_class($child).
-                        " cant be converted to a string"
-                    );
-
-                $childStr .= (string)$child.$newLine;
-            }
-        }
-
-        return "$str$newLine$childStr$indent</$name>";
+        $formatter = $formatter ? $formatter : new Formatter();
+        return $formatter->formatElement($this, $level);
     }
 
     public static function fromString($string, $encoding = null)
@@ -625,6 +539,6 @@ class Element extends Node
     public function __toString()
     {
 
-        return $this->getString();
+        return $this->format();
     }
 }

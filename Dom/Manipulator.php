@@ -2,10 +2,10 @@
 
 namespace Tale\Dom;
 
-use Exception,
-    IteratorAggregate,
-    Countable,
-    Traversable;
+use Exception;
+use IteratorAggregate;
+use Countable;
+use Traversable;
 
 //Just try this: var_dump($m->html('[lang="de"]')->html->parent->body->parent)      :)
 /**
@@ -181,13 +181,12 @@ class Manipulator implements IteratorAggregate, Countable
     /**
      * @param Element[]|Traversable|string $elements
      *
-     * @return $this
+     * @return static
      * @throws Exception
      */
     public function append($elements)
     {
 
-        $elements = $this->parseElements($elements);
         $m = new static($elements);
         foreach ($m->elements() as $appendEl)
             foreach ($this->_elements as $el)
@@ -216,7 +215,6 @@ class Manipulator implements IteratorAggregate, Countable
     public function prepend($elements)
     {
 
-        $elements = $this->parseElements($elements);
         $m = new static($elements);
         foreach ($m->elements() as $prependEl)
             foreach ($this->_elements as $el)
@@ -245,7 +243,6 @@ class Manipulator implements IteratorAggregate, Countable
     public function before($elements)
     {
 
-        $elements = $this->parseElements($elements);
         $m = new static($elements);
         foreach ($m->elements() as $prependEl)
             foreach ($this->_elements as $el)
@@ -263,7 +260,6 @@ class Manipulator implements IteratorAggregate, Countable
     public function after($elements)
     {
 
-        $elements = $this->parseElements($elements);
         $m = new static($elements);
         foreach ($m->elements() as $prependEl)
             foreach ($this->_elements as $el)
@@ -306,7 +302,7 @@ class Manipulator implements IteratorAggregate, Countable
     {
 
         $selector = $selector instanceof Selector || is_callable($selector) ? $selector : Selector::fromString($selector);
-        $filter = is_callable($selector) ? $selector : function (Element $el) use ($selector) {
+        $filter = is_callable($selector) ? $selector : function (ElementInterface $el) use ($selector) {
 
             return $el->matches($selector);
         };
@@ -317,12 +313,18 @@ class Manipulator implements IteratorAggregate, Countable
     /**
      * @param callable $handler
      *
-     * @return static
+     * @return mixed[]|static
      */
     public function map(callable $handler)
     {
 
-        return new static(array_map($handler, $this->_elements, array_keys($this->_elements)));
+        $result = array_map($handler, $this->_elements, array_keys($this->_elements));
+
+        foreach ($result as $item)
+            if (!($item instanceof ElementInterface))
+                return $result;
+
+        return new static($result);
     }
 
     /**
@@ -340,7 +342,7 @@ class Manipulator implements IteratorAggregate, Countable
     public function getText()
     {
 
-        return implode('', array_map(function(Element $el) {
+        return implode('', array_map(function(ElementInterface $el) {
 
             return $el->getText();
         }, $this->_elements));
@@ -366,21 +368,17 @@ class Manipulator implements IteratorAggregate, Countable
     }
 
     /**
-     * @param bool $pretty
-     * @param bool $requireCloseTag
-     * @param string[] $selfClosingTags
+     * @param Formatter $format
      *
      * @return string
      */
-    public function getString($pretty = false, $requireCloseTag = false, $selfClosingTags = null)
+    public function getString(Formatter $format = null, $separator = null)
     {
 
-        $newLine = $pretty ? "\n" : '';
-        $str = '';
-        foreach ($this->_elements as $el)
-            $str .= $el->getString($pretty, $requireCloseTag, $selfClosingTags).$newLine;
+        return implode($separator ?: '', $this->map(function(ElementInterface $e) use ($format) {
 
-        return trim($str);
+            return $e->format($format);
+        }));
     }
 
     /**
@@ -517,7 +515,12 @@ class Manipulator implements IteratorAggregate, Countable
                 if (is_string($index)) {
 
                     $parent = static::parseElement($index);
-                    $parent->setChildren(static::parseElementArray($element));
+
+                    if (is_string($element))
+                        $parent->setText($element);
+                    else
+                        $parent->setChildren(static::parseElementArray($element));
+
                     yield $parent;
                     continue;
                 }
