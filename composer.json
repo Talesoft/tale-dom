@@ -4,7 +4,7 @@
     "keywords": ["xml", "html", "xhtml", "svg", "markup", "parse", "write"],
     "description": "XML and HTML manipulation",
     "license": "MIT",
-    "homepage": "http://dom.tale.talesoft.io",
+    "homepage": "http://docs.talesoft.io/tale-framework/tale/dom",
     "authors": [
         {
             "name": "Talesoft",
