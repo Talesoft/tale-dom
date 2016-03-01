@@ -15,7 +15,7 @@ class Text extends Leaf implements LeafInterface
     /**
      * @var string
      */
-    private $_text;
+    private $text;
 
 
     /**
@@ -28,7 +28,7 @@ class Text extends Leaf implements LeafInterface
     {
         parent::__construct($parent);
 
-        $this->_text = $text;
+        $this->text = $text;
     }
 
     /**
@@ -37,14 +37,14 @@ class Text extends Leaf implements LeafInterface
     public function getText()
     {
 
-        return $this->_text;
+        return $this->text;
     }
 
     public function format(Formatter $formatter = null, $level = null)
     {
 
         $formatter = $formatter ?: new Formatter();
-        return $formatter->formatText($this->_text, $level);
+        return $formatter->formatText($this->text, $level);
     }
 
     /**

@@ -10,6 +10,8 @@ class Element extends DomElement
 
     const STYLE_ATTRIBUTE = 'style';
 
+    protected static $parserClassName = Parser::class;
+
     public function hasCss()
     {
 
@@ -57,11 +59,5 @@ class Element extends DomElement
 
         $formatter = $formatter ? $formatter : new Formatter();
         return parent::format($formatter, $level);
-    }
-
-    public static function getParserClassName()
-    {
-
-        return Parser::class;
     }
 }

@@ -7,9 +7,5 @@ use Tale\Dom\Parser as DomParser;
 class Parser extends DomParser
 {
 
-    public static function getElementClassName()
-    {
-
-        return Element::class;
-    }
+    protected static $elementClassName = Element::class;
 }

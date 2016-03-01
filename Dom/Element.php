@@ -20,14 +20,18 @@ class Element extends Node implements ElementInterface
      */
     const CLASS_ATTRIBUTE = 'class';
 
+
+    protected static $textClassName = Text::class;
+    protected static $parserClassName = Parser::class;
+
     /**
      * @var string
      */
-    private $_name;
+    private $name;
     /**
      * @var array|null
      */
-    private $_attributes;
+    private $attributes;
 
     /**
      * @param string             $name
@@ -39,8 +43,8 @@ class Element extends Node implements ElementInterface
     {
         parent::__construct($parent, $children);
 
-        $this->_name = $name;
-        $this->_attributes = $attributes ? $attributes : [];
+        $this->name = $name;
+        $this->attributes = $attributes ? $attributes : [];
     }
 
     /**
@@ -49,7 +53,7 @@ class Element extends Node implements ElementInterface
     public function getName()
     {
 
-        return $this->_name;
+        return $this->name;
     }
 
     /**
@@ -60,7 +64,7 @@ class Element extends Node implements ElementInterface
     public function setName($name)
     {
 
-        $this->_name = $name;
+        $this->name = $name;
 
         return $this;
     }
@@ -71,7 +75,7 @@ class Element extends Node implements ElementInterface
     public function hasAttributes()
     {
 
-        return count($this->_attributes) > 0;
+        return count($this->attributes) > 0;
     }
 
     /**
@@ -80,7 +84,7 @@ class Element extends Node implements ElementInterface
     public function getAttributes()
     {
 
-        return $this->_attributes;
+        return $this->attributes;
     }
 
     /**
@@ -91,7 +95,7 @@ class Element extends Node implements ElementInterface
     public function setAttributes(array $attributes)
     {
 
-        $this->_attributes = $attributes;
+        $this->attributes = $attributes;
 
         return $this;
     }
@@ -104,7 +108,7 @@ class Element extends Node implements ElementInterface
     public function hasAttribute($name)
     {
 
-        return isset($this->_attributes[$name]);
+        return isset($this->attributes[$name]);
     }
 
     /**
@@ -115,7 +119,7 @@ class Element extends Node implements ElementInterface
     public function getAttribute($name)
     {
 
-        return $this->_attributes[$name];
+        return $this->attributes[$name];
     }
 
     /**
@@ -127,7 +131,7 @@ class Element extends Node implements ElementInterface
     public function setAttribute($name, $value)
     {
 
-        $this->_attributes[$name] = $value;
+        $this->attributes[$name] = $value;
 
         return $this;
     }
@@ -140,7 +144,7 @@ class Element extends Node implements ElementInterface
     public function removeAttribute($name)
     {
 
-        unset($this->_attributes[$name]);
+        unset($this->attributes[$name]);
 
         return $this;
     }
@@ -318,7 +322,7 @@ class Element extends Node implements ElementInterface
 
         return $this->findChildren(function(LeafInterface $leaf) {
 
-            return $leaf->isInstanceOf(static::getTextClassName());
+            return $leaf->isInstanceOf(static::$textClassName);
         }, $depth);
     }
 
@@ -475,7 +479,7 @@ class Element extends Node implements ElementInterface
     public static function fromString($string, $encoding = null)
     {
 
-        $parserClass = static::getParserClassName();
+        $parserClass = static::$parserClassName;
         /** @var Parser $parser */
         $parser = new $parserClass($encoding);
 
@@ -485,7 +489,7 @@ class Element extends Node implements ElementInterface
     public static function fromFile($path, $encoding = null)
     {
 
-        $parserClass = static::getParserClassName();
+        $parserClass = static::$parserClassName;
         /** @var Parser $parser */
         $parser = new $parserClass($encoding);
 
@@ -516,21 +520,6 @@ class Element extends Node implements ElementInterface
                 $el->appendClass($class);
 
         return $el;
-    }
-
-    /**
-     * @return mixed
-     */
-    public static function getTextClassName()
-    {
-
-        return Text::class;
-    }
-
-    public static function getParserClassName()
-    {
-
-        return Parser::class;
     }
 
     /**

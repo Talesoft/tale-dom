@@ -24,7 +24,7 @@ class Selector
         )?
     /ix';
 
-    static $_registeredPseudos = [
+    static $registeredPseudos = [
         'first-child' => [Pseudo::class, 'isFirstChild'],
         'last-child'  => [Pseudo::class, 'isLastChild'],
         'nth-child'   => [Pseudo::class, 'isNthChild'],
@@ -33,64 +33,64 @@ class Selector
         'odd'         => [Pseudo::class, 'isOdd']
     ];
 
-    private $_name;
-    private $_id;
-    private $_classes;
-    private $_attributes;
-    private $_pseudos;
+    private $name;
+    private $id;
+    private $classes;
+    private $attributes;
+    private $pseudos;
 
     public function __construct($name = null, $id = null, array $classes = null, array $attributes = null, array $pseudos = null)
     {
 
-        $this->_name = $name;
-        $this->_id = $id;
-        $this->_classes = $classes ? $classes : [];
-        $this->_attributes = $attributes ? $attributes : [];
-        $this->_pseudos = $pseudos ? $pseudos : [];
+        $this->name = $name;
+        $this->id = $id;
+        $this->classes = $classes ? $classes : [];
+        $this->attributes = $attributes ? $attributes : [];
+        $this->pseudos = $pseudos ? $pseudos : [];
     }
 
     public function getName()
     {
 
-        return $this->_name;
+        return $this->name;
     }
 
     public function getId()
     {
 
-        return $this->_id;
+        return $this->id;
     }
 
     public function getClasses()
     {
 
-        return $this->_classes;
+        return $this->classes;
     }
 
     public function getAttributes()
     {
 
-        return $this->_attributes;
+        return $this->attributes;
     }
 
     public function getPseudos()
     {
 
-        return $this->_pseudos;
+        return $this->pseudos;
     }
 
     public function matches(Element $element)
     {
 
-        if ($this->_name && $this->_name !== '*' && $element->getName() !== $this->_name)
+        if ($this->name && $this->name !== '*' && $element->getName() !== $this->name)
             return false;
 
-        if ($this->_id && (!$element->hasId() || $element->getId() !== $this->_id))
+        if ($this->id && (!$element->hasId() || $element->getId() !== $this->id))
             return false;
 
-        if (!empty($this->_classes)) {
+        if (!empty($this->classes)) {
 
-            foreach ($this->_classes as $class)
+            foreach ($this->classes as $class)
                 if (!$element->hasClass($class))
                     return false;
         }
@@ -107,15 +107,15 @@ class Selector
             }
         }
 
-        if (!empty($this->_pseudos)) {
+        if (!empty($this->pseudos)) {
 
-            foreach ($this->_pseudos as $name => $value) {
+            foreach ($this->pseudos as $name => $value) {
 
-                if (!array_key_exists($name, self::$_registeredPseudos))
+                if (!array_key_exists($name, self::$registeredPseudos))
                     throw new Exception("Failed to resolve selector: Pseudo $name doesnt exist");
 
                 $idx = $element->getIndex();
-                if (!call_user_func(self::$_registeredPseudos[$name], $value, $element, $idx))
+                if (!call_user_func(self::$registeredPseudos[$name], $value, $element, $idx))
                     return false;
             }
         }
@@ -132,13 +132,13 @@ class Selector
                 "valid callback"
             );
 
-        self::$_registeredPseudos[$name] = $callback;
+        self::$registeredPseudos[$name] = $callback;
     }
 
     public static function removePseudo($name)
     {
 
-        unset(self::$_registeredPseudos[$name]);
+        unset(self::$registeredPseudos[$name]);
     }
 
     public static function isValid($selectorString)

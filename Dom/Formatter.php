@@ -27,28 +27,28 @@ class Formatter
     public function isPretty()
     {
 
-        return $this->getOption('pretty');
+        return $this->options['pretty'];
     }
 
     public function getIndentation($level = null)
     {
 
         return $this->isPretty() ? str_repeat(
-            $this->getOption('indentStyle'),
-            $this->getOption('indentWidth') * ($level ?: 0)
+            $this->options['indentStyle'],
+            $this->options['indentWidth'] * ($level ?: 0)
         ) : '';
     }
 
     public function getNewLine()
     {
 
-        return $this->isPretty() ? $this->getOption('newLine') : '';
+        return $this->isPretty() ? $this->options['newLine'] : '';
     }
 
     public function isShortText($string)
     {
 
-        return $this->_strlen($string) < $this->getOption('lineLimit');
+        return $this->_strlen($string) < $this->options['lineLimit'];
     }
 
     public function isShortTextElement(ElementInterface $element)
@@ -67,7 +67,7 @@ class Formatter
         if ($this->isPretty() && !$this->isShortText($text))
             $text = wordwrap(
                 $text,
-                $this->getOption('lineLimit'),
+                $this->options['lineLimit'],
                 "$newLine$indent"
             );
 
@@ -80,8 +80,7 @@ class Formatter
         if (!count($attributes))
             return '';
 
-        $quoteStyle = $this->getOption('quoteStyle');
-
+        $quoteStyle = $this->options['quoteStyle'];
         return implode(' ', array_map(function($key, $value) use ($quoteStyle) {
 
             return implode('', [
@@ -96,9 +95,9 @@ class Formatter
         if (count($element) > 0)
             return false;
 
-        return $this->getOption('allowSelfClosing') || in_array(
+        return $this->options['allowSelfClosing'] || in_array(
             $element->getName(),
-            $this->getOption('selfClosingElements'),
+            $this->options['selfClosingElements'],
             true
         );
     }
@@ -113,7 +112,7 @@ class Formatter
             $str .= " $attrs";
 
         if ($this->isSelfClosing($element))
-            $str .= $this->getOption('selfClosingStyle');
+            $str .= $this->options['selfClosingStyle'];
 
         return "$str>";
     }

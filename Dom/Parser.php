@@ -17,19 +17,22 @@ class Parser
      */
     const DEFAULT_ENCODING = 'utf-8';
 
+    protected static $elementClassName = Element::class;
+    protected static $textClassName = Text::class;
+
     /**
      * @var string
      */
-    private $_encoding;
+    private $encoding;
 
     /**
      * @var resource
      */
-    private $_internalParser;
+    private $internalParser;
     /**
      * @var Element
      */
-    private $_currentElement;
+    private $currentElement;
 
     /**
      * Parser constructor.
@@ -39,7 +42,7 @@ class Parser
     public function __construct($encoding = null)
     {
 
-        $this->_encoding = $encoding;
+        $this->encoding = $encoding;
     }
 
     /**
@@ -51,26 +54,26 @@ class Parser
     public function parse($string)
     {
 
-        $this->_internalParser = xml_parser_create($this->_encoding);
+        $this->internalParser = xml_parser_create($this->encoding);
 
-        xml_set_object($this->_internalParser, $this);
+        xml_set_object($this->internalParser, $this);
 
-        xml_parser_set_option($this->_internalParser, \XML_OPTION_CASE_FOLDING, false);
-        xml_parser_set_option($this->_internalParser, \XML_OPTION_SKIP_WHITE, true);
+        xml_parser_set_option($this->internalParser, \XML_OPTION_CASE_FOLDING, false);
+        xml_parser_set_option($this->internalParser, \XML_OPTION_SKIP_WHITE, true);
 
-        xml_set_element_handler($this->_internalParser, 'handleOpenTag', 'handleCloseTag');
-        xml_set_character_data_handler($this->_internalParser, 'handleText');
+        xml_set_element_handler($this->internalParser, 'handleOpenTag', 'handleCloseTag');
+        xml_set_character_data_handler($this->internalParser, 'handleText');
 
         $string = Parser::normalize($string);
 
-        $this->_currentElement = null;
-        if (!xml_parse($this->_internalParser, Parser::normalize($string)))
+        $this->currentElement = null;
+        if (!xml_parse($this->internalParser, Parser::normalize($string)))
             $this->throwException();
 
-        if (is_resource($this->_internalParser))
-            xml_parser_free($this->_internalParser);
+        if (is_resource($this->internalParser))
+            xml_parser_free($this->internalParser);
 
-        return $this->_currentElement;
+        return $this->currentElement;
     }
 
     public function parseFile($path)
@@ -87,8 +90,8 @@ class Parser
     protected function handleOpenTag($parser, $tag, array $attrs)
     {
 
-        $className = static::getElementClassName();
-        $this->_currentElement = new $className($tag, $attrs, $this->_currentElement);
+        $className = static::$elementClassName;
+        $this->currentElement = new $className($tag, $attrs, $this->currentElement);
     }
 
     /**
@@ -100,15 +103,15 @@ class Parser
     protected function handleCloseTag($parser, $tag)
     {
 
-        $cur = $this->_currentElement;
-        $className = static::getElementClassName();
+        $cur = $this->currentElement;
+        $className = static::$elementClassName;
         if (!$cur || !is_a($cur, $className) || $cur->getName() !== $tag)
             $this->throwException(
                 "Close-tag mismatch for tag $tag"
             );
 
         if ($cur->hasParent())
-            $this->_currentElement = $cur->getParent();
+            $this->currentElement = $cur->getParent();
     }
 
     /**
@@ -123,13 +126,13 @@ class Parser
         if (empty($text))
             return;
 
-        if (!$this->_currentElement)
+        if (!$this->currentElement)
             $this->throwException(
                 "Unexpected text, expected element"
             );
 
-        $textClass = call_user_func([static::getElementClassName(), 'getTextClassName']);
-        $this->_currentElement->appendChild(new $textClass($text));
+        $textClass = static::$textClassName;
+        $this->currentElement->appendChild(new $textClass($text));
     }
 
     public static function normalize($string)
@@ -149,19 +152,10 @@ class Parser
         throw new Exception(
             sprintf(
                 'Failed to parse DOM: %s on at %d:%d',
-                $message ? $message : xml_error_string(xml_get_error_code($this->_internalParser)),
-                xml_get_current_line_number($this->_internalParser),
-                xml_get_current_column_number($this->_internalParser)
+                $message ? $message : xml_error_string(xml_get_error_code($this->internalParser)),
+                xml_get_current_line_number($this->internalParser),
+                xml_get_current_column_number($this->internalParser)
             )
         );
-    }
-
-    /**
-     * @return string
-     */
-    public static function getElementClassName()
-    {
-
-        return Element::class;
     }
 }

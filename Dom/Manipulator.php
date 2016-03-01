@@ -11,7 +11,6 @@ use Traversable;
 /**
  * Class Manipulator
  *
- * @property Manipulator $elements
  * @property Manipulator $first
  * @property Manipulator $last
  * @property Manipulator $parent
@@ -25,10 +24,12 @@ use Traversable;
 class Manipulator implements IteratorAggregate, Countable
 {
 
+
+    protected static $elementClassName = Element::class;
     /**
-     * @var array
+     * @var Element[]
      */
-    private $_elements;
+    private $elements;
 
     /**
      * Manipulator constructor.
@@ -38,10 +39,10 @@ class Manipulator implements IteratorAggregate, Countable
     public function __construct($elements = null)
     {
 
-        $this->_elements = [];
+        $this->elements = [];
 
         if ($elements !== null)
-            $this->_elements = static::parseElementArray($elements);
+            $this->elements = static::parseElementArray($elements);
     }
 
     /**
@@ -50,20 +51,20 @@ class Manipulator implements IteratorAggregate, Countable
     public function elements()
     {
 
-        return $this->_elements;
+        return $this->elements;
     }
 
     public function first()
     {
 
-        return count($this) < 1 ? null : $this->_elements[0];
+        return count($this) < 1 ? null : $this->elements[0];
     }
 
     public function last()
     {
 
         $len = count($this);
-        return $len < 1 ? null : $this->_elements[$len - 1];
+        return $len < 1 ? null : $this->elements[$len - 1];
     }
 
     /**
@@ -77,7 +78,7 @@ class Manipulator implements IteratorAggregate, Countable
 
         $m = clone $this;
         foreach (static::parseElements($elements) as $el)
-            $m->_elements[] = $el;
+            $m->elements[] = $el;
 
         return $m;
     }
@@ -91,10 +92,10 @@ class Manipulator implements IteratorAggregate, Countable
     {
 
         $m = clone $this;
-        $m->_elements = [];
-        foreach ($this->_elements as $el)
+        $m->elements = [];
+        foreach ($this->elements as $el)
             foreach ($el->query($selectors) as $foundEl)
-                $m->_elements[] = $foundEl;
+                $m->elements[] = $foundEl;
 
         return $m;
     }
@@ -117,15 +118,15 @@ class Manipulator implements IteratorAggregate, Countable
         }
 
         $m = clone $this;
-        $m->_elements = [];
-        foreach ($this->_elements as $el) {
+        $m->elements = [];
+        foreach ($this->elements as $el) {
 
             if (!$el->hasParent())
                 continue;
 
             $parent = $el->getParent();
             if (!is_string($selector) || $el->matches($selector))
-                $m->_elements[] = $parent;
+                $m->elements[] = $parent;
         }
 
         return $m;
@@ -171,7 +172,7 @@ class Manipulator implements IteratorAggregate, Countable
     public function is($selector = null)
     {
 
-        foreach ($this->_elements as $el)
+        foreach ($this->elements as $el)
             if (!$el->matches($selector))
                 return false;
 
@@ -189,7 +190,7 @@ class Manipulator implements IteratorAggregate, Countable
 
         $m = new static($elements);
         foreach ($m->elements() as $appendEl)
-            foreach ($this->_elements as $el)
+            foreach ($this->elements as $el)
                 $el->appendChild($appendEl);
 
         return $m;
@@ -217,7 +218,7 @@ class Manipulator implements IteratorAggregate, Countable
 
         $m = new static($elements);
         foreach ($m->elements() as $prependEl)
-            foreach ($this->_elements as $el)
+            foreach ($this->elements as $el)
                 $el->prependChild($prependEl);
 
         return $m;
@@ -245,7 +246,7 @@ class Manipulator implements IteratorAggregate, Countable
 
         $m = new static($elements);
         foreach ($m->elements() as $prependEl)
-            foreach ($this->_elements as $el)
+            foreach ($this->elements as $el)
                 $el->prepend($prependEl);
 
         return $m;
@@ -262,7 +263,7 @@ class Manipulator implements IteratorAggregate, Countable
 
         $m = new static($elements);
         foreach ($m->elements() as $prependEl)
-            foreach ($this->_elements as $el)
+            foreach ($this->elements as $el)
                 $el->append($prependEl);
 
         return $m;
@@ -307,7 +308,7 @@ class Manipulator implements IteratorAggregate, Countable
             return $el->matches($selector);
         };
 
-        return new static(array_filter($this->_elements, $filter));
+        return new static(array_filter($this->elements, $filter));
     }
 
     /**
@@ -318,7 +319,7 @@ class Manipulator implements IteratorAggregate, Countable
     public function map(callable $handler)
     {
 
-        $result = array_map($handler, $this->_elements, array_keys($this->_elements));
+        $result = array_map($handler, $this->elements, array_keys($this->elements));
 
         foreach ($result as $item)
             if (!($item instanceof ElementInterface))
@@ -333,7 +334,7 @@ class Manipulator implements IteratorAggregate, Countable
     public function clear()
     {
 
-        foreach ($this->_elements as $el)
+        foreach ($this->elements as $el)
             $el->removeChildren();
 
         return $this;
@@ -345,7 +346,7 @@ class Manipulator implements IteratorAggregate, Countable
         return implode('', array_map(function(ElementInterface $el) {
 
             return $el->getText();
-        }, $this->_elements));
+        }, $this->elements));
     }
 
     /**
@@ -354,7 +355,7 @@ class Manipulator implements IteratorAggregate, Countable
     public function count()
     {
 
-        return count($this->_elements);
+        return count($this->elements);
     }
 
     /**
@@ -363,12 +364,13 @@ class Manipulator implements IteratorAggregate, Countable
     public function getIterator()
     {
 
-        foreach ($this->_elements as $el)
+        foreach ($this->elements as $el)
             yield new static($el);
     }
 
     /**
      * @param Formatter $format
+     * @param string $separator
      *
      * @return string
      */
@@ -409,7 +411,7 @@ class Manipulator implements IteratorAggregate, Countable
         }
 
         //Automatic element access/creation
-        if (!method_exists(static::getElementClassName(), $method)) {
+        if (!method_exists(static::$elementClassName, $method)) {
 
             $selector = $method.(count($args) > 0 ? (string)$args[0] : '');
             $attributes = count($args) > 1 ? $args[1] : [];
@@ -436,11 +438,11 @@ class Manipulator implements IteratorAggregate, Countable
 
         //In case you want to act on the elements ($m->getText(), $m->setCss() etc.)
         $result = [];
-        foreach ($this->_elements as $el)
+        foreach ($this->elements as $el)
             $result[] = call_user_func_array([$el, $method], $args);
 
         foreach ($result as $item)
-            if (!is_a($item, static::getElementClassName()))
+            if (!is_a($item, static::$elementClassName))
                 return $result;
 
         return new static($result);
@@ -469,15 +471,6 @@ class Manipulator implements IteratorAggregate, Countable
     }
 
     /**
-     * @return string
-     */
-    public static function getElementClassName()
-    {
-
-        return Element::class;
-    }
-
-    /**
      * @param Element|string $element
      *
      * @return Element
@@ -489,7 +482,7 @@ class Manipulator implements IteratorAggregate, Countable
         if ($element instanceof Element)
             return $element;
 
-        $elementClass = static::getElementClassName();
+        $elementClass = static::$elementClassName;
         if (is_string($element) && strstr($element, '<'))
             return call_user_func([$elementClass, 'fromString'], $element);
 
