@@ -6,6 +6,7 @@ use Tale\Tree\Node;
 
 /**
  * Class Element
+ *
  * @package Tale\Dom
  */
 class Element extends Node implements ElementInterface
@@ -15,6 +16,7 @@ class Element extends Node implements ElementInterface
      *
      */
     const ID_ATTRIBUTE = 'id';
+
     /**
      *
      */
@@ -44,7 +46,7 @@ class Element extends Node implements ElementInterface
         parent::__construct($parent, $children);
 
         $this->name = $name;
-        $this->attributes = $attributes ? $attributes : [];
+        $this->attributes = $attributes ?: [];
     }
 
     /**
@@ -317,7 +319,7 @@ class Element extends Node implements ElementInterface
      *
      * @return \Generator
      */
-    public function findTexts($depth = null)
+    public function getTexts($depth = null)
     {
 
         return $this->findChildren(function(LeafInterface $leaf) {
@@ -331,10 +333,10 @@ class Element extends Node implements ElementInterface
      *
      * @return array
      */
-    public function findTextArray($depth = null)
+    public function getTextArray($depth = null)
     {
 
-        return iterator_to_array($this->findTexts($depth));
+        return iterator_to_array($this->getTexts($depth));
     }
 
     /**
@@ -343,7 +345,7 @@ class Element extends Node implements ElementInterface
     public function getText()
     {
 
-        return implode(' ', $this->findTextArray());
+        return implode(' ', $this->getTextArray());
     }
 
     /**
@@ -415,8 +417,8 @@ class Element extends Node implements ElementInterface
         if (is_array($selectors))
             $selectors = implode(',', $selectors);
 
-        //We add a , to the selector to trigger the "," selector below and flush the results
-        $selectors = preg_split('/(,| |>)/', "$selectors,", -1, \PREG_SPLIT_DELIM_CAPTURE | \PREG_SPLIT_NO_EMPTY);
+        //We add a , to the selector to trigger the ","-case below and flush the results
+        $selectors = preg_split('/(,| |>)/', "$selectors,", -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
 
         $depth = null;
         /** @var Element[] $currentSet */
@@ -497,7 +499,7 @@ class Element extends Node implements ElementInterface
     }
 
     /**
-     * @param                      $selector
+     * @param Selector|string $selector
      * @param \Tale\Tree\Node|null $parent
      * @param array|null           $children
      *

@@ -2,9 +2,10 @@
 
 namespace Tale\Dom;
 
+use Tale\ConfigurableInterface;
 use Tale\ConfigurableTrait;
 
-class Formatter
+class Formatter implements ConfigurableInterface
 {
     use ConfigurableTrait;
 
@@ -13,14 +14,14 @@ class Formatter
 
         $this->defineOptions([
             'pretty' => false,
-            'indentWidth' => 2,
-            'indentStyle' => ' ',
-            'newLine' => "\n",
-            'lineLimit' => 60,
-            'quoteStyle' => '"',
-            'allowSelfClosing' => true,
-            'selfClosingElements' => [],
-            'selfClosingStyle' => ' /'
+            'indent_width' => 2,
+            'indent_style' => ' ',
+            'new_line' => "\n",
+            'line_limit' => 60,
+            'quote_style' => '"',
+            'allow_self_closing' => true,
+            'self_closing_elements' => [],
+            'self_closing_style' => ' /'
         ], $options);
     }
 
@@ -34,21 +35,21 @@ class Formatter
     {
 
         return $this->isPretty() ? str_repeat(
-            $this->options['indentStyle'],
-            $this->options['indentWidth'] * ($level ?: 0)
+            $this->options['indent_style'],
+            $this->options['indent_width'] * ($level ?: 0)
         ) : '';
     }
 
     public function getNewLine()
     {
 
-        return $this->isPretty() ? $this->options['newLine'] : '';
+        return $this->isPretty() ? $this->options['new_line'] : '';
     }
 
     public function isShortText($string)
     {
 
-        return $this->_strlen($string) < $this->options['lineLimit'];
+        return $this->strlen($string) < $this->options['line_limit'];
     }
 
     public function isShortTextElement(ElementInterface $element)
@@ -67,7 +68,7 @@ class Formatter
         if ($this->isPretty() && !$this->isShortText($text))
             $text = wordwrap(
                 $text,
-                $this->options['lineLimit'],
+                $this->options['line_limit'],
                 "$newLine$indent"
             );
 
@@ -80,7 +81,7 @@ class Formatter
         if (!count($attributes))
             return '';
 
-        $quoteStyle = $this->options['quoteStyle'];
+        $quoteStyle = $this->options['quote_style'];
         return implode(' ', array_map(function($key, $value) use ($quoteStyle) {
 
             return implode('', [
@@ -95,9 +96,9 @@ class Formatter
         if (count($element) > 0)
             return false;
 
-        return $this->options['allowSelfClosing'] || in_array(
+        return $this->options['allow_self_closing'] || in_array(
             $element->getName(),
-            $this->options['selfClosingElements'],
+            $this->options['self_closing_elements'],
             true
         );
     }
@@ -112,7 +113,7 @@ class Formatter
             $str .= " $attrs";
 
         if ($this->isSelfClosing($element))
-            $str .= $this->options['selfClosingStyle'];
+            $str .= $this->options['self_closing_style'];
 
         return "$str>";
     }
@@ -165,7 +166,7 @@ class Formatter
         return $str;
     }
 
-    private function _strlen($string)
+    private function strlen($string)
     {
 
         return function_exists('mb_strlen') ? mb_strlen($string) : strlen($string);

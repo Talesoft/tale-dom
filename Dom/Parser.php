@@ -152,7 +152,7 @@ class Parser
         throw new Exception(
             sprintf(
                 'Failed to parse DOM: %s on at %d:%d',
-                $message ? $message : xml_error_string(xml_get_error_code($this->internalParser)),
+                $message ?: xml_error_string(xml_get_error_code($this->internalParser)),
                 xml_get_current_line_number($this->internalParser),
                 xml_get_current_column_number($this->internalParser)
             )

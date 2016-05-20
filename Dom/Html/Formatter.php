@@ -7,7 +7,7 @@ use Tale\Dom\Formatter as DomFormatter;
 class Formatter extends DomFormatter
 {
 
-    private static $_selfClosingElements = [
+    private static $selfClosingElements = [
         'input', 'br', 'img', 'link',
         'area', 'base', 'col', 'command',
         'embed', 'hr', 'keygen', 'meta',
@@ -18,9 +18,9 @@ class Formatter extends DomFormatter
     {
 
         parent::__construct([
-            'allowSelfClosing' => false,
-            'selfClosingElements' => self::$_selfClosingElements,
-            'selfClosingStyle' => ''
+            'allow_self_closing' => false,
+            'self_closing_elements' => self::$selfClosingElements,
+            'self_closing_style' => ''
         ]);
 
         if ($options)

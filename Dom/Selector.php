@@ -44,9 +44,9 @@ class Selector
 
         $this->name = $name;
         $this->id = $id;
-        $this->classes = $classes ? $classes : [];
-        $this->attributes = $attributes ? $attributes : [];
-        $this->pseudos = $pseudos ? $pseudos : [];
+        $this->classes = $classes ?: [];
+        $this->attributes = $attributes ?: [];
+        $this->pseudos = $pseudos ?: [];
     }
 
     public function getName()
@@ -112,7 +112,9 @@ class Selector
             foreach ($this->pseudos as $name => $value) {
 
                 if (!array_key_exists($name, self::$registeredPseudos))
-                    throw new Exception("Failed to resolve selector: Pseudo $name doesnt exist");
+                    throw new Exception(
+                        "Failed to resolve selector: Pseudo $name doesnt exist"
+                    );
 
                 $idx = $element->getIndex();
                 if (!call_user_func(self::$registeredPseudos[$name], $value, $element, $idx))

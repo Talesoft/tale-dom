@@ -64,6 +64,7 @@ class Manipulator implements IteratorAggregate, Countable
     {
 
         $len = count($this);
+
         return $len < 1 ? null : $this->elements[$len - 1];
     }
 
@@ -278,6 +279,7 @@ class Manipulator implements IteratorAggregate, Countable
     {
 
         $this->append($elements);
+
         return $this;
     }
 
@@ -290,6 +292,7 @@ class Manipulator implements IteratorAggregate, Countable
     {
 
         $this->prepend($elements);
+
         return $this;
     }
 
@@ -343,7 +346,7 @@ class Manipulator implements IteratorAggregate, Countable
     public function getText()
     {
 
-        return implode('', array_map(function(ElementInterface $el) {
+        return implode('', array_map(function (ElementInterface $el) {
 
             return $el->getText();
         }, $this->elements));
@@ -370,14 +373,14 @@ class Manipulator implements IteratorAggregate, Countable
 
     /**
      * @param Formatter $format
-     * @param string $separator
+     * @param string    $separator
      *
      * @return string
      */
     public function getString(Formatter $format = null, $separator = null)
     {
 
-        return implode($separator ?: '', $this->map(function(ElementInterface $e) use ($format) {
+        return implode($separator ?: '', $this->map(function (ElementInterface $e) use ($format) {
 
             return $e->format($format);
         }));
@@ -394,7 +397,7 @@ class Manipulator implements IteratorAggregate, Countable
 
     /**
      * @param string $method
-     * @param array $args
+     * @param array  $args
      *
      * @return static|mixed[]
      */
@@ -527,6 +530,7 @@ class Manipulator implements IteratorAggregate, Countable
 
                 yield static::parseElement($element);
             }
+
             return;
         }
 

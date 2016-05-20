@@ -9,7 +9,7 @@ use Tale\Tree\Leaf;
  *
  * @package Tale\Dom
  */
-class Text extends Leaf implements LeafInterface
+class Text extends Leaf implements TextInterface
 {
 
     /**
@@ -38,6 +38,14 @@ class Text extends Leaf implements LeafInterface
     {
 
         return $this->text;
+    }
+
+    public function setText($text)
+    {
+
+        $this->text = $text;
+
+        return $this;
     }
 
     public function format(Formatter $formatter = null, $level = null)
